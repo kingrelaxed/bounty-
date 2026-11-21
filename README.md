@@ -1,5 +1,9 @@
 # Neon Vice 6
 
+[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![rank](https://make.fun/badge/gta6-01/kingrelaxed/bounty-/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![reward](https://make.fun/badge/gta6-01/kingrelaxed/bounty-/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+
 An original offline open-world action game for the make.fun GTA 6 bounty. All
 game code and assets are local to `game/`; it makes no network requests and can
 be served or packaged without third-party downloads.
