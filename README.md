@@ -1,32 +1,21 @@
-# One Planet Under Pressure
+# Neon Vice 6
 
-An original, deterministic editorial infographic for make.fun's 20 November 2026
-world-news image bounty. `main.ts` copies the finished image to
-`/output/entry.png`; it uses only Node.js built-ins, reads no network data, and
-writes the same PNG bytes on every run.
+An original offline open-world action game for the make.fun GTA 6 bounty. All
+game code and assets are local to `game/`; it makes no network requests and can
+be served or packaged without third-party downloads.
 
-The image brings together three stories reported on 20 November:
-
-- Russian attacks on Ukraine reached Polish airspace.
-- COP31 climate negotiations in Antalya ran into overtime amid divisions on
-  fossil fuels and climate finance.
-- The race for the next UN secretary-general exposed divisions among world
-  powers, including reports of UK and French opposition to the UAE candidate.
-
-The illustration is original and uses no third-party photographs or artwork.
-The reporting references are [The Guardian's 20 November world roundup](https://www.theguardian.com/world/2026/nov/20/all),
-its [Poland and Ukraine report](https://www.theguardian.com/world/2026/nov/20/russian-missiles-drone-poland-attacks-ukraine),
-and its [COP31 live coverage](https://www.theguardian.com/world/live/2026/nov/20/cop31-climate-crisis-talks-turkey-latest-news-updates).
-
-To regenerate the committed asset with Node.js:
+Run it locally:
 
 ```sh
-node render.mjs
+node serve.ts
 ```
 
-To run the entry locally:
+Then open `http://localhost:8080`.
 
-```sh
-mkdir -p out
-MAKEFUN_OUTPUT_DIR=out node main.ts
-```
+**Controls:** WASD or arrow keys move, Enter starts or restarts, E/F interacts,
+Space fires, P saves, and Escape pauses.
+
+**Mission:** Follow the cyan marker to meet Nova, complete the marina job, and
+return to the safehouse. Press E or F near each marker to advance the mission.
+Stealing a nearby car or firing raises the visible wanted level. Police units
+appear on the map and pursue you; leave them behind to lower heat.

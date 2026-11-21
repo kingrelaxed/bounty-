@@ -1,0 +1,12 @@
+=== MAKE.FUN BOUNTY TRANSCRIPT ===
+Bounty: gta6-01
+Repo: https://github.com/kingrelaxed/bounty-
+Author: @magnum-surya
+
+Validated with:
+- node serve.ts --port 8080
+- HTTP 200 for / and /src/gta.js
+- Playwright title: Neon Vice 6
+- Playwright canvas: 1
+- Screenshots: screenshots/start.jpg, screenshots/play.jpg, screenshots/mission.jpg
+- MAKEFUN_OUTPUT_DIR=out node main.ts
