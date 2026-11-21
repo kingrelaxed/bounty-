@@ -61,10 +61,155 @@ function resize() {
 addEventListener('resize', resize);
 resize();
 
+const touchControls = document.createElement('div');
+touchControls.id = 'touch-controls';
+touchControls.dataset.screen = screen;
+touchControls.innerHTML = `
+  <div class="touch-dpad" aria-label="Movement">
+    <button type="button" class="touch-button up" data-key="w" aria-label="Move up">▲</button>
+    <button type="button" class="touch-button left" data-key="a" aria-label="Move left">◀</button>
+    <button type="button" class="touch-button right" data-key="d" aria-label="Move right">▶</button>
+    <button type="button" class="touch-button down" data-key="s" aria-label="Move down">▼</button>
+  </div>
+  <div class="touch-actions">
+    <button type="button" class="touch-button interact" data-action="interact">INTERACT</button>
+    <button type="button" class="touch-button fire" data-key=" ">FIRE</button>
+  </div>
+  <button type="button" class="touch-button pause" data-action="pause" aria-label="Pause game">Ⅱ</button>
+  <button type="button" class="touch-button start" data-action="start">START</button>
+`;
+document.body.append(touchControls);
+
+const touchStyle = document.createElement('style');
+touchStyle.textContent = `
+  #touch-controls {
+    --touch-size: clamp(48px, 15vw, 68px);
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    display: none;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font: 800 12px system-ui, sans-serif;
+  }
+  #touch-controls .touch-button {
+    display: grid;
+    place-items: center;
+    min-width: var(--touch-size);
+    min-height: var(--touch-size);
+    padding: 6px;
+    border: 2px solid rgba(88, 242, 209, .88);
+    border-radius: 18px;
+    color: #f5ffff;
+    background: rgba(8, 14, 24, .78);
+    box-shadow: 0 3px 14px rgba(0, 0, 0, .35);
+    font: inherit;
+    touch-action: none;
+    pointer-events: auto;
+  }
+  #touch-controls .touch-button:active {
+    color: #09101e;
+    background: #58f2d1;
+    transform: scale(.96);
+  }
+  #touch-controls .touch-dpad,
+  #touch-controls .touch-actions {
+    position: absolute;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    display: grid;
+    gap: 4px;
+  }
+  #touch-controls .touch-dpad {
+    left: max(12px, env(safe-area-inset-left));
+    grid-template: repeat(3, var(--touch-size)) / repeat(3, var(--touch-size));
+  }
+  #touch-controls .touch-dpad .up { grid-area: 1 / 2; }
+  #touch-controls .touch-dpad .left { grid-area: 2 / 1; }
+  #touch-controls .touch-dpad .right { grid-area: 2 / 3; }
+  #touch-controls .touch-dpad .down { grid-area: 3 / 2; }
+  #touch-controls .touch-actions {
+    right: max(12px, env(safe-area-inset-right));
+    grid-template-columns: var(--touch-size);
+  }
+  #touch-controls .touch-actions .touch-button { min-width: var(--touch-size); }
+  #touch-controls .pause {
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    min-width: 72px;
+    min-height: 52px;
+    font-size: 19px;
+  }
+  #touch-controls .start {
+    position: absolute;
+    top: 53%;
+    left: 50%;
+    min-width: 150px;
+    min-height: 58px;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+  }
+  #touch-controls[data-screen="play"] .start,
+  #touch-controls[data-screen="pause"] .touch-dpad,
+  #touch-controls[data-screen="pause"] .touch-actions,
+  #touch-controls[data-screen="title"] .touch-dpad,
+  #touch-controls[data-screen="title"] .touch-actions,
+  #touch-controls[data-screen="over"] .touch-dpad,
+  #touch-controls[data-screen="over"] .touch-actions,
+  #touch-controls[data-screen="title"] .pause,
+  #touch-controls[data-screen="over"] .pause { display: none; }
+  #touch-controls[data-screen="pause"] .pause { font-size: 11px; }
+  @media (pointer: coarse), (hover: none), (max-width: 760px) {
+    #touch-controls { display: block; }
+  }
+`;
+document.head.append(touchStyle);
+
+function syncTouchControls() {
+  touchControls.dataset.screen = screen;
+  const startButton = touchControls.querySelector('[data-action="start"]');
+  startButton.textContent = screen === 'over' ? 'RESTART' : 'START';
+  const pauseButton = touchControls.querySelector('[data-action="pause"]');
+  pauseButton.textContent = screen === 'pause' ? 'RESUME' : 'Ⅱ';
+  pauseButton.setAttribute('aria-label', screen === 'pause' ? 'Resume game' : 'Pause game');
+}
+
+function setScreen(next) {
+  if (screen === next) return;
+  screen = next;
+  keys.clear();
+  syncTouchControls();
+}
+
+touchControls.querySelectorAll('[data-key]').forEach((button) => {
+  const key = button.dataset.key;
+  button.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    button.setPointerCapture(event.pointerId);
+    keys.add(key);
+  });
+  const release = () => keys.delete(key);
+  button.addEventListener('pointerup', release);
+  button.addEventListener('pointercancel', release);
+  button.addEventListener('lostpointercapture', release);
+});
+touchControls.querySelector('[data-action="interact"]').addEventListener('click', interact);
+touchControls.querySelector('[data-action="pause"]').addEventListener('click', () => {
+  if (screen === 'play') setScreen('pause');
+  else if (screen === 'pause') setScreen('play');
+});
+touchControls.querySelector('[data-action="start"]').addEventListener('click', () => {
+  if (screen === 'title') start();
+  else if (screen === 'over') restart();
+});
+syncTouchControls();
+
 addEventListener('keydown', (e) => {
   const key = e.key.toLowerCase();
   keys.add(key);
-  if (e.key === 'Escape' && screen !== 'title' && screen !== 'over') screen = screen === 'pause' ? 'play' : 'pause';
+  if (e.key === 'Escape' && screen !== 'title' && screen !== 'over') setScreen(screen === 'pause' ? 'play' : 'pause');
   if (e.key === 'Enter' && screen === 'title') start();
   if (e.key === 'Enter' && screen === 'over') restart();
   if (e.key.toLowerCase() === 'e' || e.key.toLowerCase() === 'f') interact();
@@ -104,7 +249,7 @@ function start() {
   loadGame();
   missionPrompt = 'Find the cyan mission marker';
   missionPromptTime = 3;
-  screen = 'play';
+  setScreen('play');
   health = 100;
   wanted = 0;
   status.textContent = missionText;
@@ -128,7 +273,7 @@ function restart() {
   missionPrompt = 'A new run begins';
   missionPromptTime = 3;
   syncMission();
-  screen = 'play';
+  setScreen('play');
   status.textContent = 'Mission restarted';
 }
 
@@ -251,7 +396,7 @@ function update(dt) {
     }
     if (closestCopDistance > 420) wanted = clamp(wanted - dt * 0.035, 0, 5);
   }
-  if (health <= 0) screen = 'over';
+  if (health <= 0) setScreen('over');
   camera.x += (player.x - innerWidth / 2 - camera.x) * Math.min(1, dt * 5);
   camera.y += (player.y - innerHeight / 2 - camera.y) * Math.min(1, dt * 5);
   camera.x = clamp(camera.x, 0, Math.max(0, WORLD - innerWidth));
@@ -355,67 +500,101 @@ function drawShots() {
 }
 
 function drawHUD() {
-  ctx.fillStyle = 'rgba(8,14,24,.86)'; ctx.fillRect(24, 24, 270, 118);
-  ctx.fillStyle = '#fff'; ctx.font = '700 22px system-ui'; ctx.fillText(missionText, 42, 53);
-  ctx.fillStyle = '#58f2d1'; ctx.fillText(`$${cash}`, 42, 82);
-  ctx.fillStyle = '#ff6b86'; ctx.fillRect(42, 98, 190 * health / 100, 10);
-  ctx.fillStyle = '#fff'; ctx.font = '700 15px system-ui';
-  ctx.fillText(`HEALTH ${Math.ceil(health)}  |  WANTED`, 42, 128);
+  const compact = innerWidth < 620;
+  const pad = compact ? 12 : 24;
+  const panelWidth = compact ? Math.min(220, innerWidth * 0.52) : 270;
+  const panelHeight = compact ? 84 : 118;
+  const textX = pad + (compact ? 10 : 18);
+  const textWidth = panelWidth - (compact ? 20 : 36);
+  const fitText = (text, maxWidth) => {
+    let fitted = text;
+    while (fitted.length && ctx.measureText(fitted).width > maxWidth) fitted = `${fitted.slice(0, -2)}…`;
+    return fitted;
+  };
+  ctx.fillStyle = 'rgba(8,14,24,.86)'; ctx.fillRect(pad, pad, panelWidth, panelHeight);
+  ctx.fillStyle = '#fff'; ctx.font = compact ? '700 13px system-ui' : '700 22px system-ui';
+  ctx.fillText(fitText(missionText, textWidth), textX, pad + (compact ? 22 : 29));
+  ctx.fillStyle = '#58f2d1';
+  ctx.font = compact ? '700 13px system-ui' : '700 22px system-ui';
+  ctx.fillText(`$${cash}`, textX, pad + (compact ? 43 : 58));
+  ctx.fillStyle = '#ff6b86';
+  ctx.fillRect(textX, pad + (compact ? 52 : 74), (compact ? textWidth : 190) * health / 100, compact ? 7 : 10);
+  ctx.fillStyle = '#fff';
+  ctx.font = compact ? '700 10px system-ui' : '700 15px system-ui';
+  ctx.fillText(compact ? `HP ${Math.ceil(health)}  HEAT` : `HEALTH ${Math.ceil(health)}  |  WANTED`, textX, pad + (compact ? 75 : 104));
   const heat = Math.min(5, Math.max(0, Math.ceil(wanted)));
   for (let i = 0; i < 5; i++) {
     ctx.fillStyle = i < heat ? '#ffcf57' : 'rgba(255,255,255,.22)';
     ctx.beginPath();
-    ctx.moveTo(205 + i * 17, 119);
-    ctx.lineTo(208 + i * 17, 125);
-    ctx.lineTo(202 + i * 17, 125);
+    const starX = compact ? pad + panelWidth - 47 + i * 8 : 205 + i * 17;
+    const starY = compact ? pad + 65 : 119;
+    ctx.moveTo(starX, starY);
+    ctx.lineTo(starX + (compact ? 2 : 3), starY + (compact ? 4 : 6));
+    ctx.lineTo(starX - (compact ? 2 : 3), starY + (compact ? 4 : 6));
     ctx.closePath();
     ctx.fill();
   }
   if (missionPrompt) {
+    const promptWidth = Math.min(600, innerWidth - 24);
     ctx.fillStyle = 'rgba(8,14,24,.9)';
-    ctx.fillRect(innerWidth / 2 - 300, innerHeight - 72, 600, 48);
+    ctx.fillRect(innerWidth / 2 - promptWidth / 2, innerHeight - (compact ? 158 : 72), promptWidth, compact ? 36 : 48);
     ctx.fillStyle = '#58f2d1';
-    ctx.font = '800 18px system-ui';
+    ctx.font = compact ? '800 12px system-ui' : '800 18px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText(missionPrompt, innerWidth / 2, innerHeight - 42);
+    ctx.fillText(fitText(missionPrompt, promptWidth - 16), innerWidth / 2, innerHeight - (compact ? 135 : 42));
     ctx.textAlign = 'left';
   }
 
-  const size = 150, x = innerWidth - size - 24, y = 24;
+  const size = compact ? Math.min(112, innerWidth * 0.31) : 150;
+  const x = innerWidth - size - pad, y = compact ? pad + 58 : pad;
   ctx.fillStyle = 'rgba(8,14,24,.88)'; ctx.fillRect(x, y, size, size);
-  ctx.fillStyle = '#314047'; ctx.fillRect(x + 12, y + 12, size - 24, size - 24);
+  const inset = compact ? 8 : 12;
+  ctx.fillStyle = '#314047'; ctx.fillRect(x + inset, y + inset, size - inset * 2, size - inset * 2);
   const marker = missionMarkers[mission];
   if (marker) {
     ctx.fillStyle = '#58f2d1';
     ctx.beginPath();
-    ctx.arc(x + 12 + marker.x / WORLD * (size - 24), y + 12 + marker.y / WORLD * (size - 24), 4, 0, Math.PI * 2);
+    ctx.arc(x + inset + marker.x / WORLD * (size - inset * 2), y + inset + marker.y / WORLD * (size - inset * 2), compact ? 3 : 4, 0, Math.PI * 2);
     ctx.fill();
   }
   if (wanted > 0) {
     ctx.fillStyle = '#ff5d68';
     for (const cop of police) {
       ctx.beginPath();
-      ctx.arc(x + 12 + cop.x / WORLD * (size - 24), y + 12 + cop.y / WORLD * (size - 24), 3, 0, Math.PI * 2);
+      ctx.arc(x + inset + cop.x / WORLD * (size - inset * 2), y + inset + cop.y / WORLD * (size - inset * 2), compact ? 2 : 3, 0, Math.PI * 2);
       ctx.fill();
     }
   }
   ctx.fillStyle = '#58f2d1';
-  ctx.beginPath(); ctx.arc(x + 12 + player.x / WORLD * (size - 24), y + 12 + player.y / WORLD * (size - 24), 5, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.font = '700 13px system-ui'; ctx.fillText('NEON COUNTY', x + 22, y + 166);
+  ctx.beginPath(); ctx.arc(x + inset + player.x / WORLD * (size - inset * 2), y + inset + player.y / WORLD * (size - inset * 2), compact ? 4 : 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = compact ? '700 10px system-ui' : '700 13px system-ui';
+  ctx.fillText('NEON COUNTY', x + (compact ? 8 : 22), y + size + (compact ? 13 : 16));
 }
 
 function drawTitle() {
+  const compact = innerWidth < 620;
   ctx.fillStyle = '#09101e'; ctx.fillRect(0, 0, innerWidth, innerHeight);
   ctx.fillStyle = '#58f2d1'; ctx.fillRect(0, innerHeight * 0.62, innerWidth, innerHeight * 0.38);
-  ctx.fillStyle = '#ff8099'; ctx.font = '900 82px system-ui'; ctx.textAlign = 'center';
-  ctx.fillText('NEON VICE', innerWidth / 2, innerHeight * 0.35);
-  ctx.fillStyle = '#f8d978'; ctx.font = '900 54px system-ui'; ctx.fillText('6', innerWidth / 2 + 290, innerHeight * 0.35);
-  ctx.fillStyle = '#fff'; ctx.font = '700 22px system-ui'; ctx.fillText('A neon heat open-world story', innerWidth / 2, innerHeight * 0.43);
-  ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(innerWidth / 2 - 170, innerHeight * 0.53, 340, 58);
-  ctx.fillStyle = '#fff'; ctx.font = '800 20px system-ui'; ctx.fillText('PRESS ENTER', innerWidth / 2, innerHeight * 0.57);
+  const titleSize = compact ? Math.min(48, innerWidth * 0.12) : 82;
+  ctx.fillStyle = '#ff8099'; ctx.font = `900 ${titleSize}px system-ui`; ctx.textAlign = 'center';
+  ctx.fillText('NEON VICE', innerWidth / 2 - (compact ? 8 : 0), innerHeight * 0.35);
+  ctx.fillStyle = '#f8d978'; ctx.font = `900 ${compact ? titleSize * 0.68 : 54}px system-ui`;
+  ctx.fillText('6', innerWidth / 2 + (compact ? titleSize * 2.5 : 290), innerHeight * 0.35);
+  ctx.fillStyle = '#fff'; ctx.font = compact ? '700 14px system-ui' : '700 22px system-ui';
+  ctx.fillText('A neon heat open-world story', innerWidth / 2, innerHeight * 0.43);
+  if (!compact) {
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(innerWidth / 2 - 170, innerHeight * 0.53, 340, 58);
+    ctx.fillStyle = '#fff'; ctx.font = '800 20px system-ui'; ctx.fillText('PRESS ENTER', innerWidth / 2, innerHeight * 0.57);
+  }
   ctx.fillStyle = '#09101e'; ctx.font = '700 17px system-ui';
-  ctx.fillText('WASD / ARROWS MOVE  ·  E / F INTERACT  ·  SPACE FIRE', innerWidth / 2, innerHeight * 0.66);
-  ctx.fillText('P SAVE  ·  ESC PAUSE  ·  STEAL CARS TO TEST WANTED HEAT', innerWidth / 2, innerHeight * 0.70);
+  if (compact) {
+    ctx.font = '700 12px system-ui';
+    ctx.fillText('D-pad to move · Interact · Fire', innerWidth / 2, innerHeight * 0.72);
+    ctx.fillText('Pause to save · Steal cars to raise wanted heat', innerWidth / 2, innerHeight * 0.76);
+  } else {
+    ctx.fillText('WASD / ARROWS MOVE  ·  E / F INTERACT  ·  SPACE FIRE', innerWidth / 2, innerHeight * 0.66);
+    ctx.fillText('P SAVE  ·  ESC PAUSE  ·  STEAL CARS TO TEST WANTED HEAT', innerWidth / 2, innerHeight * 0.70);
+  }
   ctx.textAlign = 'left';
 }
 
@@ -431,7 +610,8 @@ function drawPause() {
   ctx.fillStyle = 'rgba(9,13,24,.82)'; ctx.fillRect(0, 0, innerWidth, innerHeight);
   ctx.fillStyle = '#fff'; ctx.font = '900 56px system-ui'; ctx.textAlign = 'center';
   ctx.fillText('PAUSED', innerWidth / 2, innerHeight / 2);
-  ctx.font = '700 18px system-ui'; ctx.fillText('Esc to resume · P to save', innerWidth / 2, innerHeight / 2 + 42);
+  ctx.font = '700 18px system-ui';
+  ctx.fillText(innerWidth < 620 ? 'Tap Resume to continue · P to save' : 'Esc to resume · P to save', innerWidth / 2, innerHeight / 2 + 42);
   ctx.textAlign = 'left';
 }
 
@@ -456,7 +636,7 @@ function frame(now) {
 const params = new URLSearchParams(location.search);
 const shot = params.get('shot');
 if (shot) {
-  screen = 'play';
+  setScreen('play');
   player.x = shot === 'start' ? 1450 : shot === 'mission' ? 1770 : 2100;
   player.y = shot === 'start' ? 1500 : shot === 'mission' ? 1320 : 1120;
   camera.x = player.x - innerWidth / 2;

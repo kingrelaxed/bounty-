@@ -19,6 +19,9 @@ Then open `http://localhost:8080`.
 **Controls:** WASD or arrow keys move, Enter starts or restarts, E/F interacts,
 Space fires, P saves, and Escape pauses.
 
+On phones and touchscreens, use the on-screen D-pad, Interact, Fire, and Pause
+buttons; tap Start to begin. The game keeps keyboard controls on desktop.
+
 **Mission:** Follow the cyan marker to meet Nova, complete the marina job, and
 return to the safehouse. Press E or F near each marker to advance the mission.
 Stealing a nearby car or firing raises the visible wanted level. Police units
