@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs",
+    "start": "MAKEFUN_OUTPUT_DIR=${MAKEFUN_OUTPUT_DIR:-out} node main.ts"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^1.2.0"
+  }
+}
